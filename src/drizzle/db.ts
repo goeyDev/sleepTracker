@@ -1,13 +1,7 @@
 
-import { drizzle } from "drizzle-orm/node-postgres"
-import * as schema from "./schema"
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';  // Use Neon-specific driver
+import * as schema from './schema';
 
-export const db = drizzle({
-  schema,
-  connection: {
-    password: process.env.DB_PASSWORD,
-    user: process.env.DB_USER,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-  },
-})
+const sql = neon(process.env.DATABASE_URL!);
+export const db = drizzle(sql, { schema });
