@@ -6,10 +6,11 @@ import {
 } from "@/drizzle/schema";
 import { z } from "zod";
 import crypto from "crypto";
-import { db } from "@/drizzle/db";
+
 import { and, eq, gt } from "drizzle-orm";
 
 import { getRequestHeaders } from "@/lib/server/headers";
+import { db } from "@/drizzle/db";
 
 // Seven days in seconds
 const SESSION_EXPIRATION_SECONDS = 60 * 60 * 24 * 7;
@@ -107,30 +108,30 @@ export async function removeUserFromSession(
       ? logoutTime.getTime() - new Date(session.user.lastLogoutAt).getTime()
       : 0; // First session
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(userTable)
-        .set({ lastLogoutAt: new Date() })
-        .where(eq(userTable.id, session.user_id as string));
+ // 1. Update user's last logout time
+await db
+  .update(userTable)
+  .set({ lastLogoutAt: new Date() })
+  .where(eq(userTable.id, session.user_id as string));
 
-      await tx
-        .delete(sessionTable)
-        .where(eq(sessionTable.session_id, sessionId));
+// 2. Delete the session
+await db
+  .delete(sessionTable)
+  .where(eq(sessionTable.session_id, sessionId));
 
-      // 5. Create audit log with duration
-      await tx.insert(auditLogTable).values({
-        userId: session.user_id,
-        action: "logout",
-        ipAddress,
-        userAgent,
-        metadata: {
-          sessionDurationMs: sessionDuration,
-          approximateDuration: sessionDuration > 0, // Flag if duration is estimated
-          sessionId,
-        },
-        createdAt: logoutTime,
-      });
-    });
+// 3. Create audit log
+await db.insert(auditLogTable).values({
+  userId: session.user_id,
+  action: "logout",
+  ipAddress,
+  userAgent,
+  metadata: {
+    sessionDurationMs: sessionDuration,
+    approximateDuration: sessionDuration > 0,
+    sessionId,
+  },
+  createdAt: new Date(), // Use current time instead of logoutTime for consistency
+});
   } catch (error) {
     throw error;
   }

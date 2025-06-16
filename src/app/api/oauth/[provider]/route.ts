@@ -2,6 +2,7 @@
 import { getOAuthClient } from "@/auth/core/oauth/base"
 import { createUserSession } from "@/auth/core/session"
 import { db } from "@/drizzle/db"
+
 import {
   OAuthProvider,
   oAuthProviders,
@@ -47,36 +48,45 @@ export async function GET(
   redirect("/")
 }
 
-function connectUserToAccount(
+async function connectUserToAccount(
   { id, email, name }: { id: string; email: string; name: string },
   provider: OAuthProvider
 ) {
-  return db.transaction(async trx => {
-    let user = await trx.query.userTable.findFirst({
-      where: eq(userTable.email, email),
-      columns: { id: true, role: true },
-    })
+  // 1. First try to find existing user
+  let user = await db.query.userTable.findFirst({
+    where: eq(userTable.email, email),
+    columns: { id: true, role: true },
+  });
 
-    if (user == null) {
-      const [newUser] = await trx
+  // 2. Create user if not found
+  if (!user) {
+    try {
+      const [newUser] = await db
         .insert(userTable)
-        .values({
-          email: email,
-          name: name,
-        })
-        .returning({ id: userTable.id, role: userTable.role })
-      user = newUser
+        .values({ email, name })
+        .returning({ id: userTable.id, role: userTable.role });
+      user = newUser;
+    } catch (error) {
+      // Handle race condition where user might have been created by another request
+      user = await db.query.userTable.findFirst({
+        where: eq(userTable.email, email),
+        columns: { id: true, role: true },
+      });
+      if (!user) {
+        throw new Error("User creation failed");
+      }
     }
+  }
 
-    await trx
-      .insert(userOAuthAccountTable)
-      .values({
-        provider,
-        providerAccountId: id,
-        userId: user.id,
-      })
-      .onConflictDoNothing()
+  // 3. Link OAuth account (with conflict handling)
+  await db
+    .insert(userOAuthAccountTable)
+    .values({
+      provider,
+      providerAccountId: id,
+      userId: user.id,
+    })
+    .onConflictDoNothing();
 
-    return user
-  })
+  return user;
 }

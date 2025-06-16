@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 import { redirect } from "next/navigation"
-import { db } from "@/drizzle/db"
+
 import { OAuthProvider, userTable } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
 import { cookies } from "next/headers"
@@ -11,6 +11,7 @@ import { comparePasswords, generateSalt, hashPassword } from "../core/passwordHa
 import { createUserSession } from "../core/session"
 import { removeUserFromSession } from "../core/session"
 import { getOAuthClient } from "../core/oauth/base"
+import { db } from "@/drizzle/db"
 
 export async function signIn(unsafeData: z.infer<typeof signInSchema>) {
   const { success, data } = signInSchema.safeParse(unsafeData)
