@@ -1,103 +1,102 @@
+import { getCurrentUser } from "@/auth/nextjs/currentUser";
+import Link from "next/link";
+import Guest from "@/components/guess";
+import AddRecord from "@/components/AddNewRecord";
+import RecordChart from "@/components/RecordChart";
+import AverageSleep from "@/components/AverageSleep";
+import BestWorstSleep from "@/components/BestWorstSleep";
+import RecordHistory from "@/components/RecordHistory";
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default async function Home() {
+  const user = await getCurrentUser({ withFullUser: true });
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold">Welcome to Sleep Tracker</h1>
+            <div className="flex space-x-4 mb-4">
+              <Link
+                href="/sign-in"
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="flex-1 px-4 py-2 border border-purple-600 text-purple-600 rounded hover:bg-purple-50"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        {/* Guess */}
+        <div className="">
+          <Guest />
+        </div>
+      </div>
+    );
+  }
+
+  // Logged-in user sees the actual home page
+  return (
+    <main className="bg-gray-100 text-gray-800 font-sans min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            {/* User Image */}
+            {user.imageUrl && (
+              <Image
+                src={user.imageUrl}
+                alt={`${user.name}&#39;s profile`}
+                className="w-24 h-24 rounded-full border border-gray-300 shadow-md"
+              />
+            )}
+
+            {/* User Details */}
+            <div className="flex-1 hover-scale-shadow">
+              <h2 className="text-2xl md:text-3xl font-bold text-purple-600 mb-2">
+                Welcome Back, {user.name} 👋
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Here&#39;s a quick overview of your recent sleep activity. Stay
+                on top of your data insights and manage your tasks efficiently!
+              </p>
+              <div className="space-y-2">
+                <p className="text-gray-600">
+                  <span className="font-semibold text-gray-800">Joined:</span>{" "}
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-semibold text-gray-800">
+                    Last Active:
+                  </span>{" "}
+                  {user.updatedAt
+                    ? new Date(user.updatedAt).toLocaleString()
+                    : "N/A"}
+                </p>
+              </div>
+            </div>
+          </div>
+          {/* Placeholder for AddSleepRecord */}
+          <AddRecord />
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6 ">
+          {/* Placeholder for RecordStats, RecentRecord, and Insights */}
+          <RecordChart />
+          <AverageSleep />
+          <BestWorstSleep />
+        </div>
+      </div>
+      {/* Placeholder for SleepHistory */}
+      <div className="max-w-7xl mx-auto">
+        <RecordHistory />
+      </div>
+    </main>
   );
 }
