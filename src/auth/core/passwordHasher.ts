@@ -1,14 +1,14 @@
 import crypto from "crypto";
-import { scrypt } from 'crypto';
-import { promisify } from 'util';
 
 
-// from Deepseek
-const scryptPromise = promisify(scrypt);
-
-export async function hashPassword(password: string, salt: string): Promise<string> {
-  const hash = await scryptPromise(password, salt, 64);
-  return (hash as Buffer).toString('hex');
+export function hashPassword(password:string,salt:string):Promise<string>{
+    return new Promise((resolve,reject) => {
+        crypto.scrypt(password.normalize(),salt,64,(error,hash) => {
+            if(error) reject(error)
+                resolve(hash.toString("hex").normalize())
+        })
+    })
+    
 }
 
 //enhance the password difficulty
@@ -32,14 +32,3 @@ export async function comparePasswords({
     Buffer.from(hashedPassword, "hex")
   );
 }
-
-// from chatGPT
-// import { scrypt } from "crypto";
-// import { promisify } from "util";
-
-// const scryptAsync = promisify(scrypt);
-
-// export async function hashPassword(password: string, salt: string) {
-//   const hash = (await scryptAsync(password.normalize(), salt, 64)) as Buffer;
-//   return hash.toString("hex").normalize();
-// }
